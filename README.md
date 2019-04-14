@@ -60,17 +60,20 @@ Create a Redirect URI inside quick book application. The redirect URI must be an
 And then create action grant with the following content:
 
 ```rb
-def grant
-  # redirect_uri callback from quick books
-  redirect_uri = 'http://localhost:3000/home/quick_books_oauth_callback'
+class HomeController < ApplicationController
+  # ...
+  def grant
+    # redirect_uri callback from quick books
+    redirect_uri = 'http://localhost:3000/home/quick_books_oauth_callback'
 
-  grant_url = ::QB_OAUTH2_CONSUMER.auth_code.authorize_url(
-    redirect_uri: redirect_uri,
-    response_type: "code",
-    state: SecureRandom.hex(12),
-    scope: "com.intuit.quickbooks.accounting" # change scope to suit your need
-  )
-  redirect_to grant_url
+    grant_url = ::QB_OAUTH2_CONSUMER.auth_code.authorize_url(
+      redirect_uri: redirect_uri,
+      response_type: "code",
+      state: SecureRandom.hex(12),
+      scope: "com.intuit.quickbooks.accounting" # change scope to suit your need
+    )
+    redirect_to grant_url
+  end
 end
 ```
 
@@ -91,23 +94,27 @@ bundle exec rake db:migrate
 Create action `quick_books_oauth_callback` inside `HomeController` to listen to oauth callback. The purpose is to store the very first access token. This access token can be used to refresh itself later or can be used to retrieve data later
 
 ```rb
-def quick_books_oauth_callback
-  redirect_uri = 'http://localhost:3000/home/quick_book_oauth_callback'
-  if resp = ::QB_OAUTH2_CONSUMER.auth_code.get_token(
-      params[:code], :redirect_uri => redirect_uri)
+class HomeController < ApplicationController
+  # ...
 
-    QuickBooksAccessToken.destroy_all
+  def quick_books_oauth_callback
+    redirect_uri = 'http://localhost:3000/home/quick_book_oauth_callback'
+    if resp = ::QB_OAUTH2_CONSUMER.auth_code.get_token(
+        params[:code], :redirect_uri => redirect_uri)
 
-    # save quickbook access token for next time use
-    QuickBooksAccessToken.create(
-      access_token: resp.token,
-      refresh_token: resp.refresh_token,
-      company_id: params[:realmId],
-      token_expires_at: Time.at(resp.expires_at)
-    )
+      QuickBooksAccessToken.destroy_all
+
+      # save quickbook access token for next time use
+      QuickBooksAccessToken.create(
+        access_token: resp.token,
+        refresh_token: resp.refresh_token,
+        company_id: params[:realmId],
+        token_expires_at: Time.at(resp.expires_at)
+      )
+    end
+
+    render json: { result: :ok }
   end
-
-  render json: { result: :ok }
 end
 ```
 
@@ -117,8 +124,6 @@ end
 
 ```rb
 class QuickBooksAccessToken < ApplicationRecord
-  # ...
-  
   def refresh!
     at = OAuth2::AccessToken.new(QB_OAUTH2_CONSUMER, access_token, refresh_token: refresh_token)
     refresh = at.refresh!
@@ -138,7 +143,9 @@ Add this function inside ``quick_books_access_token.rb`` to retrieve data
 
 ```rb
 class QuickBooksAccessToken < ApplicationRecord
-
+  
+  # ...
+  
   # call retrieve_customers['QueryResponse']['Customer']
   def retrieve_customers
     at = OAuth2::AccessToken.new(QB_OAUTH2_CONSUMER, access_token)
