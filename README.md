@@ -163,7 +163,7 @@ end
 
 ```
 
-## 9. To retrieve customers in the future, simply call:
+## 11. To retrieve customers in the future, simply call:
 
 ```rb
 response = QuickBooksAccessToken.last.retrieve_customers
