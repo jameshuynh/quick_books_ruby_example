@@ -1,3 +1,21 @@
+This is an example app on how to retrieve and refresh access token in quick book:
+
+# Run this example
+
+```
+bundle install
+rails server
+```
+
+- Visit http://localhost:3000/home/index
+- Click on Quick Books button
+- Click Connect on the pop up window
+- Wait until you see `{ "result": "ok" }`
+- Go into rails console (i.e. `rails c`)
+- Run `QuickBooksAccessToken.last.retrieve_customers`
+
+# Instructions
+
 ## 1. Add oauth2 gem
 
 ```
