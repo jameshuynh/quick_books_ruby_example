@@ -8,7 +8,7 @@ gem 'oauth2', '~> 1.4.1'
 
 ## 2. Create config/initializers/quick_books.rb
 
-```
+```rb
 # please get the consumer key & secret from the app created in quickbooks
 
 OAUTH_CONSUMER_KEY = "Q0Qi2A03fQqevqBimQqr0YJcHn7DW5mvRtzKq450QiJ43KGFvh"
