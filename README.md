@@ -1,4 +1,30 @@
-## 1. Create a controller called Home
+## 1. Add oauth2 gem
+
+```
+# Gemfile
+
+gem 'oauth2', '~> 1.4.1'
+```
+
+## 2. Create config/initializers/quick_books.rb
+
+```
+# please get the consumer key & secret from the app created in quickbooks
+
+OAUTH_CONSUMER_KEY = "Q0Qi2A03fQqevqBimQqr0YJcHn7DW5mvRtzKq450QiJ43KGFvh"
+OAUTH_CONSUMER_SECRET = "0NoizqLckN4lbEiUyW4LJH2LhoW34EGr53mKtlsa"
+
+oauth_params = {
+  :site => "https://appcenter.intuit.com/connect/oauth2",
+  :authorize_url => "https://appcenter.intuit.com/connect/oauth2",
+  :token_url => "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
+}
+
+::QB_OAUTH2_CONSUMER = OAuth2::Client.new(OAUTH_CONSUMER_KEY, OAUTH_CONSUMER_SECRET, oauth_params)
+Quickbooks.sandbox_mode = true
+```
+
+## 3. Create a controller called HomeController with index action
 
 ```rb
 class HomeController < ApplicationController
@@ -25,9 +51,9 @@ intuit.ipp.anywhere.setup({grantUrl: 'http://localhost:3000/home/grant'});
 
 The URL `http://localhost:3000/home/grant` must be an absolute URL.
 
-## 2. Create grant action inside Home controller
+## 4. Create grant action inside Home controller
 
-Create a Redirect URI inside quick book application:
+Create a Redirect URI inside quick book application. The redirect URI must be an absolute URL
 
 ``http://localhost:3000/home/quick_books_oauth_callback``
 
@@ -48,19 +74,19 @@ def grant
 end
 ```
 
-## 3. Create a model to store access token
+## 5. Create a model to store access token
 
 ```
 rails g model quick_books_access_token access_token:text refresh_token:text company_id token_expires_at:datetime
 ```
 
-## 4. Run migrate
+## 6. Run migration
 
 ```bash
 bundle exec rake db:migrate
 ```
 
-## 5. Listen to oauth2 callback to store access token
+## 7. Listen to oauth2 callback to store access token
 
 Create action `quick_books_oauth_callback` inside `HomeController` to listen to oauth callback. The purpose is to store the very first access token. This access token can be used to refresh itself later or can be used to retrieve data later
 
@@ -85,12 +111,14 @@ def quick_books_oauth_callback
 end
 ```
 
-## 6. Add code to refresh token
+## 8. Add code to refresh token
 
 5 - Inside QuickBookAccessToken model, add `refresh!` method
 
 ```rb
 class QuickBooksAccessToken < ApplicationRecord
+  # ...
+  
   def refresh!
     at = OAuth2::AccessToken.new(QB_OAUTH2_CONSUMER, access_token, refresh_token: refresh_token)
     refresh = at.refresh!
@@ -104,7 +132,7 @@ class QuickBooksAccessToken < ApplicationRecord
 end
 ```
 
-## 7. Retrieve data
+## 9. Retrieve data from quick_books_access_token.rb
 
 Add this function inside ``quick_books_access_token.rb`` to retrieve data
 
@@ -124,7 +152,16 @@ class QuickBooksAccessToken < ApplicationRecord
 end
 ```
 
-## 8. Schedule QuickBooksAccessToken.last.refresh! to run every 30 mins (using whenever & cron job)
+## 10. Schedule QuickBooksAccessToken.last.refresh! to run every 30 mins (using whenever & cron job)
+
+Inside `config/scheduler.rb`
+
+```
+every 30.mins do
+  runner 'QuickBooksAccessToken.last.refresh'
+end
+
+```
 
 ## 9. To retrieve customers in the future, simply call:
 
