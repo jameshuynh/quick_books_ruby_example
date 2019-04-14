@@ -57,6 +57,8 @@ Create a Redirect URI inside quick book application. The redirect URI must be an
 
 ``http://localhost:3000/home/quick_books_oauth_callback``
 
+<img src='https://raw.githubusercontent.com/jameshuynh/quick_books_ruby_example/master/public/screenshot1.png' />
+
 And then create action grant with the following content:
 
 ```rb
