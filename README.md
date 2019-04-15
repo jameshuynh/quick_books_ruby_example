@@ -185,7 +185,7 @@ Inside `config/scheduler.rb`
 
 ```
 every 30.mins do
-  runner 'QuickBooksAccessToken.last.refresh'
+  runner 'QuickBooksAccessToken.last.refresh!'
 end
 
 ```
